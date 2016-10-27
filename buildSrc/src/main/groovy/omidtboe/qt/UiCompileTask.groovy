@@ -12,7 +12,7 @@ class UiCompileTask extends SourceTask {
 
 	@TaskAction
 	void uiCompile() {
-		source.filter{ x -> x.isFile() }.each { 
+		source.filter{ x -> x.isFile() }.each {
 			def baseName = it.name - ".ui"
 			def headerFile = "${destinationDir}/ui_${baseName}.h"
 			def process = "${uic} -o ${headerFile} -g cpp ${it.path}".execute()
@@ -21,5 +21,5 @@ class UiCompileTask extends SourceTask {
 				println process.err.text
 			}
 		}
-         }
+	}
 }
