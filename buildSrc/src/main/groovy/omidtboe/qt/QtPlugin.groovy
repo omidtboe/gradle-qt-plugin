@@ -9,7 +9,6 @@ import org.gradle.platform.base.BinarySpec
 import org.gradle.platform.base.TypeBuilder
 import org.gradle.platform.base.ComponentType
 
-// TODO Consider removing StringUtils
 import org.apache.commons.lang.StringUtils
 import org.gradle.model.Defaults
 import org.gradle.model.Model
@@ -23,11 +22,11 @@ import org.gradle.language.cpp.tasks.CppCompile
 
 import omidtboe.qt.UiSourceSet
 import omidtboe.qt.internal.DefaultUiSourceSet
-// import qt.internal.DefaultQtDependencySet
 import omidtboe.qt.QtSettings
 
 class QtPlugin extends RuleSource {
 	private boolean isValidModule(String module) {
+		// TODO Add other modules
 		return module in ['QtCore', 'QtGui', 'QtWidgets']
 	}
 
@@ -73,13 +72,13 @@ class QtPlugin extends RuleSource {
 		}
 	}
 
-        @ComponentType
-        void registerLanguage(TypeBuilder<UiSourceSet> builder) {
-            builder.defaultImplementation(DefaultUiSourceSet.class);
-        }
+	@ComponentType
+	void registerLanguage(TypeBuilder<UiSourceSet> builder) {
+		builder.defaultImplementation(DefaultUiSourceSet.class);
+	}
 
 	@Mutate
-    	void createQtUicTasks(@Path("binaries") ModelMap<BinarySpec> binaries, final @Path("buildDir") File buildDir, QtSettings settings) {
+	void createQtUicTasks(@Path("binaries") ModelMap<BinarySpec> binaries, final @Path("buildDir") File buildDir, QtSettings settings) {
 		def uic = 'uic-qt4'
 		if (settings.version.equalsIgnoreCase('qt5')) {
 			uic = 'uic-qt5'
@@ -108,13 +107,13 @@ class QtPlugin extends RuleSource {
 				// Set dependency so ui headers are compiled first
 				binary.tasks.withType(CppCompile.class) { compileTask ->
 					compileTask.dependsOn(taskName)
-			        }
+				}
 			}
 		}
 	}
 
 	@Mutate
-    	void addQtDependencies(@Path("binaries") ModelMap<BinarySpec> binaries, QtSettings qtSettings) {
+	void addQtDependencies(@Path("binaries") ModelMap<BinarySpec> binaries, QtSettings qtSettings) {
 		binaries.beforeEach { binary ->
 			// Add qt include paths to CppCompile tasks
 			binary.tasks.withType(CppCompile.class) { compileTask ->
@@ -135,6 +134,7 @@ class QtPlugin extends RuleSource {
 					mod ->
 					if (isValidModule(mod))
 					{
+						// TODO Handle Qt5 and Qt4
 						task.lib(task.getProject().files("/usr/lib64/lib${mod}.so".replaceAll('Qt', 'Qt5')))
 					}
 				}
