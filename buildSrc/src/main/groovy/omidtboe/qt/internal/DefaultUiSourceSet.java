@@ -6,6 +6,6 @@ import org.gradle.language.nativeplatform.internal.AbstractHeaderExportingSource
 public class DefaultUiSourceSet extends AbstractHeaderExportingSourceSet implements UiSourceSet {
     @Override
     protected String getLanguageName() {
-        return "QtUic";
+        return "QtUi";
     }
 }
