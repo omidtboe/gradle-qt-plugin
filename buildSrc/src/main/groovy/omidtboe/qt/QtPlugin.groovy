@@ -116,16 +116,26 @@ class QtPlugin extends RuleSource {
 
 	@Mutate
 	void addQtDependencies(@Path("binaries") ModelMap<BinarySpec> binaries, QtSettings qtSettings) {
+		// Filter out invalid qt modules
+		def qtModules = []
+		qtSettings.modules.each {
+			mod ->
+			if (isValidModule(mod))
+			{
+				qtModules += mod
+			}
+			else
+			{
+				println("Dropping invalid Qt module '${mod}'")
+			}
+		}
+
 		binaries.beforeEach { binary ->
 			// Add qt include paths to CppCompile tasks
 			binary.tasks.withType(CppCompile.class) { compileTask ->
 				compileTask.includes(qtSettings.headerDir)
-				qtSettings.modules.each {
-					mod ->
-					if (isValidModule(mod))
-					{
-						compileTask.includes(new File(qtSettings.headerDir, mod))
-					}
+				qtModules.each {
+					mod -> compileTask.includes(new File(qtSettings.headerDir, mod))
 				}
 			}
 		}
@@ -133,24 +143,17 @@ class QtPlugin extends RuleSource {
 		binaries.withType(NativeExecutableBinarySpec) { binary ->
 			binary.tasks.withType(LinkExecutable.class) { task ->
 				qtSettings.modules.each {
-					mod ->
-					if (isValidModule(mod))
-					{
-						// TODO Handle Qt5 and Qt4
-						task.lib(task.getProject().files("/usr/lib64/lib${mod}.so".replaceAll('Qt', 'Qt5')))
-					}
+					// TODO Handle Qt5 and Qt4
+					mod -> task.lib(task.getProject().files("/usr/lib64/lib${mod}.so".replaceAll('Qt', 'Qt5')))
 				}
 			}
 
 		}
+
 		binaries.withType(SharedLibraryBinarySpec.class) { binary ->
 			binary.tasks.withType(LinkSharedLibrary.class) { task ->
 				qtSettings.modules.each {
-					mod ->
-					if (isValidModule(mod))
-					{
-						task.lib(task.getProject().files("/usr/lib64/lib${mod}.so".replaceAll('Qt', 'Qt5')))
-					}
+					mod -> task.lib(task.getProject().files("/usr/lib64/lib${mod}.so".replaceAll('Qt', 'Qt5')))
 				}
 			}
 		}
