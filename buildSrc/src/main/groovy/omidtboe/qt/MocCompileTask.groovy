@@ -12,7 +12,7 @@ class MocCompileTask extends SourceTask {
 
 	@TaskAction
 	void generateMocFile() {
-		source.filter { x -> x.isFile() && x.getName().matches(".*?.h.*?") && x.text.contains('Q_OBJECT') }.each {
+		source.filter { x -> x.isFile() && x.getName().matches(".+?\\.h\\w*?") && x.text.contains('Q_OBJECT') }.each {
 			def mocFileName = "${destinationDir}/moc_${it.name}.cpp"
 			def process = "${moc} -o ${mocFileName} ${it.path}".execute()
 			process.waitFor()

@@ -62,6 +62,8 @@ class QtPlugin extends RuleSource {
 				}
 
 				// Add generated cpp files to source set
+				// TODO Not optimal. Causes build to be dirty second run when running gradle two times in a row
+				// Create a separate dependency instead
 				sourceSet.source.srcDir(destDir)
 
 				// Set dependency so moc cpp files are compiled first
