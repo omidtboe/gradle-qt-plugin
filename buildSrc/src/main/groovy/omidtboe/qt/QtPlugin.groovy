@@ -55,15 +55,16 @@ class QtPlugin extends RuleSource {
 				// Create moc task
 				binary.tasks.create(taskName, MocCompileTask) { task ->
 					task.moc = moc
-					task.source = sourceSet.source
-					task.source += sourceSet.exportedHeaders
+					// Add header files to moc task
+					task.source = sourceSet.source.filter { x -> x.isFile() && x.getName().matches(".+?\\.h\\w*?") }
+					task.source += sourceSet.exportedHeaders.filter { x -> x.isFile() && x.getName().matches(".+?\\.h\\w*?") }
 					task.destinationDir = destDir
 					task.description = "Generates Qt moc source files '${sourceSet.parentName}:${sourceSet.name}' for ${binary.displayName}"
 				}
 
-				// Add generated cpp files to source set
-				// TODO Not optimal. Causes build to be dirty second run when running gradle two times in a row
-				// Create a separate dependency instead
+				def compileTaskName = "${binary.getNamingScheme().getTaskName('compileMoc')}${StringUtils.capitalize(sourceSet.parentName)}${StringUtils.capitalize(sourceSet.name)}"
+
+				// Add destination of generated moc_*.cpp to sourceset
 				sourceSet.source.srcDir(destDir)
 
 				// Set dependency so moc cpp files are compiled first
