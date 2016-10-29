@@ -25,9 +25,15 @@ import omidtboe.qt.internal.DefaultUiSourceSet
 import omidtboe.qt.QtSettings
 
 class QtPlugin extends RuleSource {
-	private boolean isValidModule(String module) {
-		// TODO Add other modules
-		return module in ['QtCore', 'QtGui', 'QtWidgets']
+	private boolean isValidModule(String version, String module) {
+		def validModules = ['QtCore', 'QtDBus', 'QtGui', 'QtHelp', 'QtMultimedia', 'QtNetwork',
+				    'QtOpenGL', 'QtSql', 'QtSvg', 'QtTest', 'QtXml', 'QtXmlPatterns']
+		if (version == 'Qt5')
+		{
+			validModules += ['QtMultimediaWidgets', 'QtWidgets', 'QtConcurrent']
+		}
+		return module in validModules
+	}
 	}
 
 	@Model
