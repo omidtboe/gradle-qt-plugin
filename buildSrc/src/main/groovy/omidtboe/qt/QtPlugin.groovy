@@ -34,6 +34,14 @@ class QtPlugin extends RuleSource {
 		}
 		return module in validModules
 	}
+
+	private File getLibFile(String version, File libDir, String module) {
+		def libFile = "lib${module}.so"
+		if (version == 'Qt5')
+		{
+			libFile = libFile.replaceAll('Qt', 'Qt5')
+		}
+		return new File(libDir, libFile)
 	}
 
 	@Model
@@ -47,8 +55,8 @@ class QtPlugin extends RuleSource {
 		settings.setModules(['QtCore', 'QtGui'])
 	}
 
-	@Defaults
-	void createQtMocTask(@Path("binaries") ModelMap<BinarySpec> binaries, final @Path("buildDir") File buildDir, final @Path("qtSettings") QtSettings settings) {
+	@Mutate
+	void createQtMocTask(@Path("binaries") ModelMap<BinarySpec> binaries, final @Path("buildDir") File buildDir, QtSettings settings) {
 		def moc = 'moc-qt4'
 		if (settings.version.equalsIgnoreCase('qt5')) {
 			moc = 'moc-qt5'
@@ -73,7 +81,7 @@ class QtPlugin extends RuleSource {
 				// Add destination of generated moc_*.cpp to sourceset
 				sourceSet.source.srcDir(destDir)
 
-				// Set dependency so moc cpp files are compiled first
+				// Set dependency so moc cpp files are generated first
 				binary.tasks.withType(CppCompile.class) { compileTask ->
 					compileTask.dependsOn(taskName)
 				}
@@ -113,7 +121,7 @@ class QtPlugin extends RuleSource {
 					cppSourceSet.lib(uiSourceSet)
 				}
 
-				// Set dependency so ui headers are compiled first
+				// Set dependency so ui headers are generated first
 				binary.tasks.withType(CppCompile.class) { compileTask ->
 					compileTask.dependsOn(taskName)
 				}
@@ -123,45 +131,34 @@ class QtPlugin extends RuleSource {
 
 	@Mutate
 	void addQtDependencies(@Path("binaries") ModelMap<BinarySpec> binaries, QtSettings qtSettings) {
-		// Filter out invalid qt modules
-		def qtModules = []
+		def qtLibs = []
+		def qtHeaders = [qtSettings.headerDir]
 		qtSettings.modules.each {
 			mod ->
-			if (isValidModule(mod))
-			{
-				qtModules += mod
+			if (isValidModule(qtSettings.version, mod)) {
+				qtLibs += getLibFile(qtSettings.version, qtSettings.libDir, mod)
+				qtHeaders += new File(qtSettings.headerDir, mod)
 			}
-			else
-			{
+			else {
 				println("Dropping invalid Qt module '${mod}'")
 			}
 		}
 
 		binaries.beforeEach { binary ->
-			// Add qt include paths to CppCompile tasks
 			binary.tasks.withType(CppCompile.class) { compileTask ->
-				compileTask.includes(qtSettings.headerDir)
-				qtModules.each {
-					mod -> compileTask.includes(new File(qtSettings.headerDir, mod))
-				}
+				compileTask.includes(qtHeaders)
 			}
 		}
 
 		binaries.withType(NativeExecutableBinarySpec) { binary ->
 			binary.tasks.withType(LinkExecutable.class) { task ->
-				qtSettings.modules.each {
-					// TODO Handle Qt5 and Qt4
-					mod -> task.lib(task.getProject().files("/usr/lib64/lib${mod}.so".replaceAll('Qt', 'Qt5')))
-				}
+				task.lib(task.getProject().files(qtLibs))
 			}
-
 		}
 
 		binaries.withType(SharedLibraryBinarySpec.class) { binary ->
 			binary.tasks.withType(LinkSharedLibrary.class) { task ->
-				qtSettings.modules.each {
-					mod -> task.lib(task.getProject().files("/usr/lib64/lib${mod}.so".replaceAll('Qt', 'Qt5')))
-				}
+				task.lib(task.getProject().files(qtLibs))
 			}
 		}
 	}
