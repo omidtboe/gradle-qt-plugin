@@ -19,7 +19,6 @@ import org.gradle.model.RuleSource
 import org.gradle.language.cpp.CppSourceSet
 import org.gradle.language.cpp.tasks.CppCompile
 
-
 import omidtboe.qt.UiSourceSet
 import omidtboe.qt.internal.DefaultUiSourceSet
 import omidtboe.qt.QtSettings
@@ -49,10 +48,10 @@ class QtPlugin extends RuleSource {
 
 	@Defaults
 	void setDefaultQtSettings(QtSettings settings) {
-		settings.setVersion("Qt5")
+		settings.version "Qt5"
 		settings.headerDir "/usr/include/qt5/"
 		settings.libDir "/lib64/"
-		settings.setModules(['QtCore', 'QtGui'])
+		settings.modules = ['QtCore', 'QtGui']
 	}
 
 	@Mutate
@@ -62,7 +61,7 @@ class QtPlugin extends RuleSource {
 			moc = 'moc-qt5'
 		}
 		binaries.beforeEach { binary ->
-			binary.inputs.withType(CppSourceSet.class) { sourceSet ->
+			binary.inputs.withType(CppSourceSet) { sourceSet ->
 				def taskName = "${binary.getNamingScheme().getTaskName('generateMoc')}${StringUtils.capitalize(sourceSet.parentName)}${StringUtils.capitalize(sourceSet.name)}"
 				def destDir = new File(buildDir, "generated/${sourceSet.parentName}/moc")
 
@@ -82,7 +81,7 @@ class QtPlugin extends RuleSource {
 				sourceSet.source.srcDir(destDir)
 
 				// Set dependency so moc cpp files are generated first
-				binary.tasks.withType(CppCompile.class) { compileTask ->
+				binary.tasks.withType(CppCompile) { compileTask ->
 					compileTask.dependsOn(taskName)
 				}
 			}
@@ -91,7 +90,7 @@ class QtPlugin extends RuleSource {
 
 	@ComponentType
 	void registerLanguage(TypeBuilder<UiSourceSet> builder) {
-		builder.defaultImplementation(DefaultUiSourceSet.class);
+		builder.defaultImplementation(DefaultUiSourceSet);
 	}
 
 	@Mutate
@@ -101,7 +100,7 @@ class QtPlugin extends RuleSource {
 			uic = 'uic-qt5'
 		}
 		binaries.beforeEach { binary ->
-			binary.inputs.withType(UiSourceSet.class) { uiSourceSet ->
+			binary.inputs.withType(UiSourceSet) { uiSourceSet ->
 				def taskName = "${binary.getNamingScheme().getTaskName('generateUi')}${StringUtils.capitalize(uiSourceSet.parentName)}${StringUtils.capitalize(uiSourceSet.name)}Headers"
 				def destDir = new File(buildDir, "generated/${uiSourceSet.parentName}/uic")
 
@@ -117,12 +116,12 @@ class QtPlugin extends RuleSource {
 				uiSourceSet.exportedHeaders.srcDir(destDir)
 
 				// Add exported headers to cpp source sets
-				binary.inputs.withType(CppSourceSet.class) { cppSourceSet ->
+				binary.inputs.withType(CppSourceSet) { cppSourceSet ->
 					cppSourceSet.lib(uiSourceSet)
 				}
 
 				// Set dependency so ui headers are generated first
-				binary.tasks.withType(CppCompile.class) { compileTask ->
+				binary.tasks.withType(CppCompile) { compileTask ->
 					compileTask.dependsOn(taskName)
 				}
 			}
@@ -145,19 +144,19 @@ class QtPlugin extends RuleSource {
 		}
 
 		binaries.beforeEach { binary ->
-			binary.tasks.withType(CppCompile.class) { compileTask ->
+			binary.tasks.withType(CppCompile) { compileTask ->
 				compileTask.includes(qtHeaders)
 			}
 		}
 
 		binaries.withType(NativeExecutableBinarySpec) { binary ->
-			binary.tasks.withType(LinkExecutable.class) { task ->
+			binary.tasks.withType(LinkExecutable) { task ->
 				task.lib(task.getProject().files(qtLibs))
 			}
 		}
 
-		binaries.withType(SharedLibraryBinarySpec.class) { binary ->
-			binary.tasks.withType(LinkSharedLibrary.class) { task ->
+		binaries.withType(SharedLibraryBinarySpec) { binary ->
+			binary.tasks.withType(LinkSharedLibrary) { task ->
 				task.lib(task.getProject().files(qtLibs))
 			}
 		}
