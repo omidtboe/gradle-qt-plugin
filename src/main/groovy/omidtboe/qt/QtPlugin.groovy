@@ -66,23 +66,24 @@ class QtPlugin extends RuleSource {
 				def destDir = new File(buildDir, "generated/${sourceSet.parentName}/moc")
 
 				// Create moc task
-				binary.tasks.create(taskName, MocCompileTask) { task ->
-					task.moc = moc
-					// Add header files to moc task
-					task.source = sourceSet.source.filter { x -> x.isFile() && x.getName().matches(".+?\\.h\\w*?") }
-					task.source += sourceSet.exportedHeaders.filter { x -> x.isFile() && x.getName().matches(".+?\\.h\\w*?") }
-					task.destinationDir = destDir
-					task.description = "Generates Qt moc source files '${sourceSet.parentName}:${sourceSet.name}' for ${binary.displayName}"
-				}
+				def mocHeaders = sourceSet.source.filter { x -> x.isFile() && x.getName().matches(".+?\\.h\\w*?") && x.text.contains('Q_OBJECT') }
+				mocHeaders += sourceSet.exportedHeaders.filter { x -> x.isFile() && x.getName().matches(".+?\\.h\\w*?") && x.text.contains('Q_OBJECT') }
+				if (!mocHeaders.isEmpty()) {
+					binary.tasks.create(taskName, MocCompileTask) { task ->
+						task.moc = moc
+						// Add header files to moc task
+						task.source = mocHeaders
+						task.destinationDir = destDir
+						task.description = "Generates Qt moc source files '${sourceSet.parentName}:${sourceSet.name}' for ${binary.displayName}"
+					}
 
-				def compileTaskName = "${binary.getNamingScheme().getTaskName('compileMoc')}${StringUtils.capitalize(sourceSet.parentName)}${StringUtils.capitalize(sourceSet.name)}"
+					// Add destination of generated moc_*.cpp to sourceset
+					sourceSet.source.srcDir(destDir)
 
-				// Add destination of generated moc_*.cpp to sourceset
-				sourceSet.source.srcDir(destDir)
-
-				// Set dependency so moc cpp files are generated first
-				binary.tasks.withType(CppCompile) { compileTask ->
-					compileTask.dependsOn(taskName)
+					// Set dependency so moc cpp files are generated first
+					binary.tasks.withType(CppCompile) { compileTask ->
+						compileTask.dependsOn(taskName)
+					}
 				}
 			}
 		}
