@@ -18,6 +18,7 @@ import org.gradle.model.Path
 import org.gradle.model.RuleSource
 import org.gradle.language.cpp.CppSourceSet
 import org.gradle.language.cpp.tasks.CppCompile
+import org.gradle.nativeplatform.test.NativeTestSuiteBinarySpec
 
 import omidtboe.qt.UiSourceSet
 import omidtboe.qt.internal.DefaultUiSourceSet
@@ -158,6 +159,12 @@ class QtPlugin extends RuleSource {
 
 		binaries.withType(SharedLibraryBinarySpec) { binary ->
 			binary.tasks.withType(LinkSharedLibrary) { task ->
+				task.lib(task.getProject().files(qtLibs))
+			}
+		}
+
+		binaries.withType(NativeTestSuiteBinarySpec) { binary ->
+			binary.tasks.withType(LinkExecutable) { task ->
 				task.lib(task.getProject().files(qtLibs))
 			}
 		}
