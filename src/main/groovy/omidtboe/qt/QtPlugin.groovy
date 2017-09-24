@@ -59,7 +59,7 @@ class QtPlugin extends RuleSource {
 	void createQtMocTask(@Path("binaries") ModelMap<BinarySpec> binaries, final @Path("buildDir") File buildDir, QtSettings settings) {
 		def moc = 'moc-qt4'
 		if (settings.version.equalsIgnoreCase('qt5')) {
-			moc = 'moc-qt5'
+			moc = 'moc'
 		}
 		binaries.beforeEach { binary ->
 			binary.inputs.withType(CppSourceSet) { sourceSet ->
@@ -99,7 +99,7 @@ class QtPlugin extends RuleSource {
 	void createQtUicTasks(@Path("binaries") ModelMap<BinarySpec> binaries, final @Path("buildDir") File buildDir, QtSettings settings) {
 		def uic = 'uic-qt4'
 		if (settings.version.equalsIgnoreCase('qt5')) {
-			uic = 'uic-qt5'
+			uic = 'uic'
 		}
 		binaries.beforeEach { binary ->
 			binary.inputs.withType(UiSourceSet) { uiSourceSet ->
